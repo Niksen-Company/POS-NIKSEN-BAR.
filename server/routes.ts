@@ -25,6 +25,10 @@ function isAllowedDomain(email: string): boolean {
   return email.endsWith(`@${allowedDomain}`);
 }
 
+function toIntParam(value: string | string[]): number {
+  return parseInt(Array.isArray(value) ? value[0] : value, 10);
+}
+
 // ── Auth middleware ───────────────────────────────────────────────────────────
 function requireAuth(req: Request, res: Response, next: NextFunction) {
   if (!req.session.userId) return res.status(401).json({ error: "Not authenticated" });
@@ -193,7 +197,7 @@ export function registerRoutes(app: Express) {
   });
 
   app.patch("/api/users/:id", requireRole("owner", "manager"), async (req, res) => {
-    const id = parseInt(req.params.id);
+    const id = toIntParam(req.params.id);
     try {
       const { name, email, role, active, pin, password } = req.body;
       const updateData: any = {};
@@ -210,7 +214,7 @@ export function registerRoutes(app: Express) {
   });
 
   app.delete("/api/users/:id", requireRole("owner"), async (req, res) => {
-    const id = parseInt(req.params.id);
+    const id = toIntParam(req.params.id);
     try {
       await db.update(users).set({ active: false }).where(eq(users.id, id));
       res.json({ ok: true });
@@ -232,7 +236,7 @@ export function registerRoutes(app: Express) {
   });
 
   app.patch("/api/products/:id", requireRole("owner","manager"), async (req, res) => {
-    const id = parseInt(req.params.id);
+    const id = toIntParam(req.params.id);
     try {
       const u = await storage.updateProduct(id, req.body);
       if (!u) return res.status(404).json({ error: "Not found" });
@@ -241,7 +245,7 @@ export function registerRoutes(app: Express) {
   });
 
   app.patch("/api/products/:id/image", requireRole("owner","manager","staff"), async (req, res) => {
-    const id = parseInt(req.params.id);
+    const id = toIntParam(req.params.id);
     const { imgUrl } = req.body as { imgUrl: string | null };
     try {
       const u = await storage.updateProductImage(id, imgUrl ?? null);
@@ -251,7 +255,7 @@ export function registerRoutes(app: Express) {
   });
 
   app.delete("/api/products/:id", requireRole("owner"), async (req, res) => {
-    const id = parseInt(req.params.id);
+    const id = toIntParam(req.params.id);
     try {
       const ok = await storage.deleteProduct(id);
       if (!ok) return res.status(404).json({ error: "Not found" });
@@ -274,7 +278,7 @@ export function registerRoutes(app: Express) {
   });
 
   app.patch("/api/clients/:id", requireRole("owner","manager"), async (req, res) => {
-    const id = parseInt(req.params.id);
+    const id = toIntParam(req.params.id);
     try {
       const u = await storage.updateClient(id, req.body);
       if (!u) return res.status(404).json({ error: "Not found" });
@@ -294,7 +298,11 @@ export function registerRoutes(app: Express) {
     const p = checkoutSchema.safeParse(req.body);
     if (!p.success) return res.status(400).json({ error: p.error.flatten() });
     try {
-      const order = await storage.checkout({ ...p.data, createdBy: req.session.userId });
+      const order = await storage.checkout({
+        ...p.data,
+        items: p.data.items.map((item) => ({ ...item, imgUrl: item.imgUrl ?? null })),
+        createdBy: req.session.userId,
+      });
       res.status(201).json(order);
     } catch (e: any) { res.status(500).json({ error: e.message }); }
   });

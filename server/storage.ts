@@ -88,7 +88,7 @@ export class PgStorage implements IStorage {
     return Promise.all(rows.map(async o => {
       const items = await db.select().from(orderItems).where(eq(orderItems.orderId, o.id));
       const client = o.clientId ? (await db.select().from(clients).where(eq(clients.id, o.clientId)))[0] ?? null : null;
-      return { ...o, items, client };
+      return { ...o, items, client, createdByUser: null };
     }));
   }
 
@@ -97,7 +97,7 @@ export class PgStorage implements IStorage {
     if (!o) return undefined;
     const items = await db.select().from(orderItems).where(eq(orderItems.orderId, id));
     const client = o.clientId ? (await db.select().from(clients).where(eq(clients.id, o.clientId)))[0] ?? null : null;
-    return { ...o, items, client };
+    return { ...o, items, client, createdByUser: null };
   }
 
   async checkout(payload: CheckoutPayload & { createdBy?: number }): Promise<OrderWithItems> {
@@ -136,7 +136,7 @@ export class PgStorage implements IStorage {
       ? (await db.select().from(clients).where(eq(clients.id, payload.clientId)))[0] ?? null
       : null;
 
-    return { ...order, items, client };
+    return { ...order, items, client, createdByUser: null };
   }
 
   // ── Stats ────────────────────────────────────────────────────────────────────

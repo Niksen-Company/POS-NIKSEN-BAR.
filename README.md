@@ -28,6 +28,37 @@ npm run build
 npm start
 ```
 
+## 5. Production (Real Use)
+
+### Create production env
+Copy `.env.production.example` to your deployment secrets and set real values:
+
+- `DATABASE_URL`
+- `SESSION_SECRET` (long random value)
+- `GOOGLE_CLIENT_ID`
+- `GOOGLE_CLIENT_SECRET`
+- `GOOGLE_CALLBACK_URL` (must match Google Console redirect URI)
+- `ALLOWED_DOMAIN` (or `*`)
+
+### Build and run
+```bash
+npm ci
+npm run check
+npm run build
+NODE_ENV=production npm start
+```
+
+### Required Google OAuth settings
+
+- Add `https://your-domain.com/auth/google/callback` to Google Cloud Console redirect URIs.
+- Add your domain to JavaScript origins if frontend is served there.
+
+### Security notes
+
+- Never commit `.env`.
+- Rotate secrets if exposed.
+- In production, app startup now fails if `SESSION_SECRET` is missing or left as default.
+
 ---
 
 ## Architecture

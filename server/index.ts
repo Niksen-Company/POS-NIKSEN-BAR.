@@ -10,16 +10,26 @@ import { fileURLToPath } from "url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 const PORT = parseInt(process.env.PORT || "5000");
+const isProduction = process.env.NODE_ENV === "production";
+const sessionSecret = process.env.SESSION_SECRET;
+
+if (isProduction && (!sessionSecret || sessionSecret === "niksen-pos-secret-2024")) {
+  throw new Error("SESSION_SECRET must be set to a strong value in production");
+}
+
+if (isProduction) {
+  app.set("trust proxy", 1);
+}
 
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: false, limit: "10mb" }));
 
 app.use(session({
-  secret: process.env.SESSION_SECRET || "niksen-pos-secret-2024",
+  secret: sessionSecret || "niksen-pos-secret-2024",
   resave: false,
   saveUninitialized: false,
   cookie: {
-    secure: process.env.NODE_ENV === "production",
+    secure: isProduction,
     httpOnly: true,
     maxAge: 8 * 60 * 60 * 1000, // 8 hours
   },
@@ -37,7 +47,7 @@ declare module "express-session" {
 
 registerRoutes(app);
 
-if (process.env.NODE_ENV === "production") {
+if (isProduction) {
   const distPath = path.resolve(__dirname, "../dist/public");
   app.use(express.static(distPath));
   app.get("*", (_req, res) => res.sendFile(path.join(distPath, "index.html")));

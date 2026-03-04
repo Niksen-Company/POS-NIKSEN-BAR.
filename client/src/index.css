@@ -1,0 +1,106 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 160 12% 5%;
+    --foreground: 150 15% 92%;
+    --card: 160 12% 8%;
+    --card-foreground: 150 15% 92%;
+    --card-border: 160 10% 14%;
+    --popover: 160 12% 8%;
+    --popover-foreground: 150 15% 92%;
+    --popover-border: 160 10% 14%;
+    --primary: 152 100% 45%;
+    --primary-foreground: 0 0% 0%;
+    --primary-border: rgba(0,232,122,0.4);
+    --secondary: 160 10% 14%;
+    --secondary-foreground: 150 15% 70%;
+    --secondary-border: rgba(31,46,40,0.6);
+    --muted: 160 10% 30%;
+    --muted-foreground: 150 10% 45%;
+    --muted-border: rgba(90,116,104,0.3);
+    --accent: 152 100% 45%;
+    --accent-foreground: 0 0% 0%;
+    --accent-border: rgba(0,232,122,0.3);
+    --destructive: 351 100% 65%;
+    --destructive-foreground: 0 0% 100%;
+    --destructive-border: rgba(255,77,109,0.3);
+    --border: 160 10% 14%;
+    --input: 160 10% 12%;
+    --ring: 152 100% 45%;
+    --radius: 0.5625rem;
+    --font-sans: 'DM Sans', sans-serif;
+    --font-mono: 'DM Mono', monospace;
+    --font-display: 'Syne', sans-serif;
+    --chart-1: 152 100% 45%;
+    --chart-2: 210 80% 65%;
+    --chart-3: 35 100% 65%;
+    --chart-4: 280 60% 65%;
+    --chart-5: 60 80% 60%;
+    --sidebar: 160 12% 6%;
+    --sidebar-foreground: 150 15% 92%;
+    --sidebar-border: 160 10% 14%;
+    --sidebar-primary: 152 100% 45%;
+    --sidebar-primary-foreground: 0 0% 0%;
+    --sidebar-accent: 160 10% 12%;
+    --sidebar-accent-foreground: 150 15% 70%;
+    --sidebar-ring: 152 100% 45%;
+  }
+}
+
+@layer base {
+  * { @apply border-border; box-sizing: border-box; }
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+  h1,h2,h3,h4,h5,h6 { font-family: var(--font-display); }
+  code, pre, kbd { font-family: var(--font-mono); }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: hsl(var(--border)); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: hsl(var(--muted)); }
+
+/* Accent glow pulse */
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: 0 0 8px hsl(var(--primary) / 0.5); }
+  50% { box-shadow: 0 0 16px hsl(var(--primary) / 0.8); }
+}
+
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.animate-slide-up { animation: slide-up 0.25s ease-out forwards; }
+.animate-fade-in { animation: fade-in 0.2s ease-out forwards; }
+
+/* Status dot */
+.status-online { background: theme('colors.status.online'); box-shadow: 0 0 6px theme('colors.status.online'); }
+
+/* Card hover */
+.card-hover {
+  transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+}
+.card-hover:hover {
+  border-color: hsl(var(--primary) / 0.5);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px hsl(var(--primary) / 0.08);
+}
+
+/* Mono text */
+.font-mono { font-family: var(--font-mono); }
+.font-display { font-family: var(--font-display); }

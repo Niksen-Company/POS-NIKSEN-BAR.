@@ -7,6 +7,7 @@ type AuthCtx = {
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
+  refreshUser: () => Promise<void>;
   can: (perm: keyof typeof ROLE_PERMISSIONS[Role]) => boolean;
 };
 
@@ -41,6 +42,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   }
 
+  async function refreshUser() {
+    try {
+      const r = await fetch("/api/auth/me");
+      const d = r.ok ? await r.json() : null;
+      setUser(d?.user ?? null);
+    } catch {
+      // silently ignore
+    }
+  }
+
   function can(perm: keyof typeof ROLE_PERMISSIONS[Role]): boolean {
     if (!user) return false;
     const role = user.role as Role;
@@ -48,7 +59,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return perms ? (perms[perm] as boolean) : false;
   }
 
-  return <Ctx.Provider value={{ user, loading, login, logout, can }}>{children}</Ctx.Provider>;
+  return <Ctx.Provider value={{ user, loading, login, logout, refreshUser, can }}>{children}</Ctx.Provider>;
 }
 
 export function useAuth() {

@@ -173,6 +173,31 @@ export function registerRoutes(app: Express) {
     } catch (e: any) { res.status(500).json({ error: e.message }); }
   });
 
+  // Update own profile (any authenticated user)
+  app.patch("/api/auth/profile", requireAuth, async (req, res) => {
+    try {
+      const { name, email, password } = req.body as { name?: string; email?: string; password?: string };
+      const updateData: Record<string, unknown> = {};
+      if (name?.trim())  updateData.name  = name.trim();
+      if (email?.trim()) {
+        const normalized = email.trim().toLowerCase();
+        const existing = await getUserByEmail(normalized);
+        if (existing && existing.id !== req.session.userId) {
+          return res.status(409).json({ error: "Email is already in use by another account" });
+        }
+        updateData.email = normalized;
+      }
+      if (password) {
+        if (password.length < 6) return res.status(400).json({ error: "Password must be at least 6 characters" });
+        updateData.passwordHash = await hashPassword(password);
+      }
+      if (Object.keys(updateData).length === 0) return res.status(400).json({ error: "No changes provided" });
+      const [u] = await db.update(users).set(updateData).where(eq(users.id, req.session.userId!)).returning();
+      if (!u) return res.status(404).json({ error: "User not found" });
+      res.json({ user: toSafeUser(u) });
+    } catch (e: any) { res.status(500).json({ error: e.message }); }
+  });
+
   // ══ USERS (owner only) ════════════════════════════════════════════════════
 
   app.get("/api/users", requireRole("owner"), async (_req, res) => {

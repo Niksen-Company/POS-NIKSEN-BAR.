@@ -1,18 +1,25 @@
-__pycache__/
-*.py[cod]
-*.pyo
-*.pyd
-.Python
-*.egg
-*.egg-info/
+# Dependencies
+node_modules/
+
+# Build output
 dist/
-build/
-.eggs/
+
+# Environment variables (never commit secrets)
 .env
-.venv
-env/
-venv/
-.idea/
+.env.*
+!.env.example
+!.env.production.example
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# OS files
+.DS_Store
+._*
+
+# Editor
 .vscode/
-*.swp
-*.swo
+.idea/

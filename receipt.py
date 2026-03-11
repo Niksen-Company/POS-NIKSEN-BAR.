@@ -1,7 +1,6 @@
 """Receipt generation for NIKSEN BAR POS system."""
 
 from datetime import datetime
-from typing import Optional
 
 from order import Order
 

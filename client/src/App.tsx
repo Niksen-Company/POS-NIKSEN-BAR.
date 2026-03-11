@@ -11,10 +11,10 @@ import InventoryPage from "@/pages/inventory";
 import ClientsPage from "@/pages/clients";
 import OrdersPage from "@/pages/orders";
 import UsersPage from "@/pages/UsersPage";
-import CameraPage from "@/pages/camera"; // ← NEW
+import ProfilePage from "@/pages/ProfilePage";
 import {
   LayoutGrid, ShoppingCart, Package, Users, ClipboardList,
-  UserCog, LogOut, ChevronDown, Camera, // ← Camera added
+  UserCog, LogOut, ChevronDown, UserCircle,
 } from "lucide-react";
 
 // Pages visible per role
@@ -24,7 +24,6 @@ const ALL_PAGES = [
   { key: "inventory", label: "Inventory", icon: Package,      perm: "canManageStock"    as const },
   { key: "clients",   label: "Clients",   icon: Users,        perm: "canManageClients"  as const },
   { key: "orders",    label: "Orders",    icon: ClipboardList,perm: "canViewReports"    as const },
-  { key: "camera",    label: "Camera",    icon: Camera,       perm: "canViewDash"       as const }, // ← NEW
   { key: "users",     label: "Team",      icon: UserCog,      perm: "canManageUsers"    as const },
 ];
 
@@ -41,7 +40,7 @@ function Clock() {
   );
 }
 
-function UserMenu({ onLogout }: { onLogout: () => void }) {
+function UserMenu({ onLogout, onProfile }: { onLogout: () => void; onProfile: () => void }) {
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
   if (!user) return null;
@@ -77,8 +76,12 @@ function UserMenu({ onLogout }: { onLogout: () => void }) {
                 {rp.badge} {rp.label}
               </div>
             </div>
+            <button onClick={() => { onProfile(); setOpen(false); }}
+              className="w-full flex items-center gap-2.5 px-4 py-3 text-xs text-[#e4ede8] hover:bg-[#1a2620] transition-colors">
+              <UserCircle size={13} /> My Profile
+            </button>
             <button onClick={() => { onLogout(); setOpen(false); }}
-              className="w-full flex items-center gap-2.5 px-4 py-3 text-xs text-red-400 hover:bg-red-400/5 transition-colors">
+              className="w-full flex items-center gap-2.5 px-4 py-3 text-xs text-red-400 hover:bg-red-400/5 transition-colors border-t border-[#1a2620]">
               <LogOut size={13} /> Sign out
             </button>
           </div>
@@ -91,6 +94,7 @@ function UserMenu({ onLogout }: { onLogout: () => void }) {
 function AppShell() {
   const { user, loading, logout, can } = useAuth();
   const [page, setPage] = useState("pos");
+  const [showProfile, setShowProfile] = useState(false);
 
   if (loading) return (
     <div className="min-h-screen bg-[#080d0b] flex items-center justify-center">
@@ -109,7 +113,6 @@ function AppShell() {
     inventory: InventoryPage,
     clients:   ClientsPage,
     orders:    OrdersPage,
-    camera:    CameraPage,   // ← NEW
     users:     UsersPage,
   }[currentPage] ?? POSPage;
 
@@ -161,14 +164,14 @@ function AppShell() {
           {visiblePages.map(({ key, label, icon: Icon }) => (
             <button
               key={key}
-              onClick={() => setPage(key)}
+              onClick={() => { setPage(key); setShowProfile(false); }}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-mono transition-all border"
-              style={currentPage === key
+              style={!showProfile && currentPage === key
                 ? { background: "rgba(0,232,122,0.08)", borderColor: "rgba(0,232,122,0.35)", color: "#00e87a" }
                 : { border: "1px solid transparent", color: "#4e6a5c" }
               }
-              onMouseEnter={e => { if (currentPage !== key) (e.target as HTMLElement).style.color = "#e4ede8"; }}
-              onMouseLeave={e => { if (currentPage !== key) (e.target as HTMLElement).style.color = "#4e6a5c"; }}
+              onMouseEnter={e => { if (showProfile || currentPage !== key) (e.target as HTMLElement).style.color = "#e4ede8"; }}
+              onMouseLeave={e => { if (showProfile || currentPage !== key) (e.target as HTMLElement).style.color = "#4e6a5c"; }}
             >
               <Icon size={12} />
               {label}
@@ -179,12 +182,12 @@ function AppShell() {
         <div className="flex items-center gap-3">
           <Clock />
           <div className="w-px h-4 bg-[#1a2620]" />
-          <UserMenu onLogout={logout} />
+          <UserMenu onLogout={logout} onProfile={() => setShowProfile(true)} />
         </div>
       </header>
 
       <main className="flex-1 overflow-hidden">
-        <PageComponent />
+        {showProfile ? <ProfilePage /> : <PageComponent />}
       </main>
     </div>
   );

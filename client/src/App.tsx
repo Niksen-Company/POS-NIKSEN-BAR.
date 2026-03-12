@@ -11,10 +11,11 @@ import InventoryPage from "@/pages/inventory";
 import ClientsPage from "@/pages/clients";
 import OrdersPage from "@/pages/orders";
 import UsersPage from "@/pages/UsersPage";
-import CameraPage from "@/pages/camera"; // ← NEW
+import CameraPage from "@/pages/camera";
+import FridgePage from "@/pages/fridge";
 import {
   LayoutGrid, ShoppingCart, Package, Users, ClipboardList,
-  UserCog, LogOut, ChevronDown, Camera, // ← Camera added
+  UserCog, LogOut, ChevronDown, Camera, Refrigerator,
 } from "lucide-react";
 
 // Pages visible per role
@@ -25,6 +26,7 @@ const ALL_PAGES = [
   { key: "clients",   label: "Clients",   icon: Users,        perm: "canManageClients"  as const },
   { key: "orders",    label: "Orders",    icon: ClipboardList,perm: "canViewReports"    as const },
   { key: "camera",    label: "Camera",    icon: Camera,       perm: "canViewDash"       as const }, // ← NEW
+  { key: "fridge",    label: "Fridge",    icon: Refrigerator, perm: "canViewDash"       as const }, // ← NEW
   { key: "users",     label: "Team",      icon: UserCog,      perm: "canManageUsers"    as const },
 ];
 
@@ -110,6 +112,7 @@ function AppShell() {
     clients:   ClientsPage,
     orders:    OrdersPage,
     camera:    CameraPage,   // ← NEW
+    fridge:    FridgePage,   // ← NEW
     users:     UsersPage,
   }[currentPage] ?? POSPage;
 

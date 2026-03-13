@@ -1,7 +1,9 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { api } from "@/lib/query";
+import { useState } from "react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
 import type { OrderWithItems } from "@shared/schema";
+import { Download, Database, CheckCircle, Loader } from "lucide-react";
 
 function fmtPrice(n: number) {
   if (n >= 1000000) return "฿" + (n / 1000000).toFixed(1) + "M";
@@ -46,9 +48,23 @@ const WEEKLY_DATA = [
 ];
 
 export default function DashboardPage() {
+  const [gcsMsg, setGcsMsg] = useState<string | null>(null);
+
   const { data: stats } = useQuery({
     queryKey: ["/api/stats"],
     queryFn: () => api.get("/api/stats"),
+  });
+
+  const { mutate: exportCSV, isPending: exportingCSV } = useMutation({
+    mutationFn: () => api.post("/api/gcs/export-csv", { days: 30 }),
+    onSuccess: (d: any) => setGcsMsg(`✅ CSV exported — ${d.rows} rows → ${d.key}`),
+    onError:   (e: any) => setGcsMsg(`❌ ${e.message}`),
+  });
+
+  const { mutate: runBackup, isPending: backingUp } = useMutation({
+    mutationFn: () => api.post("/api/gcs/backup", {}),
+    onSuccess: (d: any) => setGcsMsg(`✅ Backup done — ${d.products} products, ${d.orders} orders → ${d.key}`),
+    onError:   (e: any) => setGcsMsg(`❌ ${e.message}`),
   });
 
   const daily = stats?.daily ?? 48500;
@@ -173,6 +189,39 @@ export default function DashboardPage() {
             ))}
           </div>
         </div>
+      </div>
+
+      {/* ── Google Cloud Storage ── */}
+      <div className="bg-card border border-border rounded-xl p-5">
+        <div className="flex items-center gap-2 mb-4">
+          <Database size={14} className="text-primary" />
+          <h3 className="font-display font-bold text-sm">Cloud Storage</h3>
+          <span className="font-mono text-[10px] text-muted-foreground ml-auto">niksen-bar-storage · asia-southeast1</span>
+        </div>
+        <div className="flex gap-3">
+          <button
+            onClick={() => { setGcsMsg(null); exportCSV(); }}
+            disabled={exportingCSV}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl border text-xs font-mono transition-all"
+            style={{ background: "rgba(0,232,122,0.06)", borderColor: "rgba(0,232,122,0.3)", color: "#00e87a" }}>
+            {exportingCSV ? <Loader size={12} className="animate-spin" /> : <Download size={12} />}
+            Export Sales CSV (30 days)
+          </button>
+          <button
+            onClick={() => { setGcsMsg(null); runBackup(); }}
+            disabled={backingUp}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl border text-xs font-mono transition-all"
+            style={{ background: "rgba(78,106,92,0.1)", borderColor: "#1a2620", color: "#a0b8ac" }}>
+            {backingUp ? <Loader size={12} className="animate-spin" /> : <Database size={12} />}
+            Backup to GCS
+          </button>
+        </div>
+        {gcsMsg && (
+          <div className="mt-3 flex items-start gap-2 font-mono text-[11px] text-[#a0b8ac] bg-[#0a120e] border border-[#1a2620] rounded-lg px-3 py-2">
+            <CheckCircle size={12} className="text-primary mt-0.5 shrink-0" />
+            {gcsMsg}
+          </div>
+        )}
       </div>
     </div>
   );

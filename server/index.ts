@@ -4,6 +4,7 @@ import session from "express-session";
 import passport from "passport";
 import { registerRoutes } from "./routes";
 import { registerFridgeRoutes } from "./fridge";
+import { registerGCSRoutes } from "./gcs";
 import { seedUsersIfEmpty } from "./auth";
 import path from "path";
 
@@ -46,6 +47,7 @@ declare module "express-session" {
 
 registerRoutes(app);
 registerFridgeRoutes(app);
+registerGCSRoutes(app);
 
 if (isProduction) {
   const distPath = path.resolve(process.cwd(), "dist/public");

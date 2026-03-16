@@ -13,6 +13,7 @@ import OrdersPage from "@/pages/orders";
 import UsersPage from "@/pages/UsersPage";
 import CameraPage from "@/pages/camera";
 import FridgePage from "@/pages/fridge";
+import CustomerMenuPage from "@/pages/customer";
 import {
   LayoutGrid, ShoppingCart, Package, Users, ClipboardList,
   UserCog, LogOut, ChevronDown, Camera, Refrigerator,
@@ -194,6 +195,14 @@ function AppShell() {
 }
 
 export default function Root() {
+  // Public route — no auth needed
+  if (window.location.pathname === "/menu") {
+    return (
+      <QueryClientProvider client={queryClient}>
+        <CustomerMenuPage />
+      </QueryClientProvider>
+    );
+  }
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>

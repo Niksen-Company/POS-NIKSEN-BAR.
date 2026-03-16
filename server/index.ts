@@ -5,6 +5,7 @@ import passport from "passport";
 import { registerRoutes } from "./routes";
 import { registerFridgeRoutes } from "./fridge";
 import { registerGCSRoutes } from "./gcs";
+import { registerCustomerRoutes } from "./customer";
 import { seedUsersIfEmpty } from "./auth";
 import path from "path";
 
@@ -48,10 +49,13 @@ declare module "express-session" {
 registerRoutes(app);
 registerFridgeRoutes(app);
 registerGCSRoutes(app);
+registerCustomerRoutes(app);
 
 if (isProduction) {
   const distPath = path.resolve(process.cwd(), "dist/public");
   app.use(express.static(distPath));
+  // Public customer menu route
+  app.get("/menu", (_req, res) => res.sendFile(path.join(distPath, "index.html")));
   app.get("*", (_req, res) => res.sendFile(path.join(distPath, "index.html")));
 }
 

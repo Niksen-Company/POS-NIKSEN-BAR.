@@ -54,9 +54,8 @@ registerCustomerRoutes(app);
 if (isProduction) {
   const distPath = path.resolve(process.cwd(), "dist/public");
   app.use(express.static(distPath));
-  // Public customer menu route
   app.get("/menu", (_req, res) => res.sendFile(path.join(distPath, "index.html")));
-  app.get("*", (_req, res) => res.sendFile(path.join(distPath, "index.html")));
+  app.get("/{*splat}", (_req, res) => res.sendFile(path.join(distPath, "index.html")));
 }
 
 app.listen(PORT, "0.0.0.0", async () => {

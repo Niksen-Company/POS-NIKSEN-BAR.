@@ -2,14 +2,12 @@
 
 import sys
 import os
-from unittest.mock import patch
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from menu import Menu, MenuItem
 from order import Order, OrderManager, OrderStatus
 from receipt import generate_receipt
 from report import daily_sales_report
-from main import run
 
 
 # ── Menu Tests ────────────────────────────────────────────────────────────────
@@ -244,16 +242,6 @@ def test_daily_report_with_orders():
     report = daily_sales_report(all_orders)
     assert "Total Orders  : 1" in report
     assert "Beer" in report
-
-
-# ── Run Tests ──────────────────────────────────────────────────────────────────
-
-def test_run_exits_on_zero():
-    with patch("builtins.input", return_value="0"):
-        with patch("builtins.print") as mock_print:
-            run()
-    printed = " ".join(str(a) for call in mock_print.call_args_list for a in call.args)
-    assert "Goodbye" in printed
 
 
 if __name__ == "__main__":

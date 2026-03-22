@@ -44,6 +44,17 @@ function requireRole(...roles: string[]) {
   };
 }
 
+const profileUpdateSchema = z.object({
+  name:            z.string().trim().min(1).optional(),
+  email:           z.string().trim().email().optional(),
+  currentPassword: z.string().optional(),
+  password:        z.string().optional(),
+}).superRefine((data, ctx) => {
+  if (data.password && !data.currentPassword) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["currentPassword"], message: "Current password is required to set a new password" });
+  }
+});
+
 const checkoutSchema = z.object({
   clientId:      z.number().nullable().optional(),
   items: z.array(z.object({
@@ -173,14 +184,16 @@ export function registerRoutes(app: Express) {
     } catch (e: any) { res.status(500).json({ error: e.message }); }
   });
 
-  // Update own profile (any authenticated user)
-  app.patch("/api/auth/profile", requireAuth, async (req, res) => {
+  // Update own profile (any authenticated user except customer)
+  app.patch("/api/auth/profile", requireRole("owner", "manager", "staff"), async (req, res) => {
+    const parsed = profileUpdateSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
+    const { name, email, currentPassword, password } = parsed.data;
     try {
-      const { name, email, password } = req.body as { name?: string; email?: string; password?: string };
-      const updateData: Record<string, unknown> = {};
-      if (name?.trim())  updateData.name  = name.trim();
-      if (email?.trim()) {
-        const normalized = email.trim().toLowerCase();
+      const updateData: Partial<typeof users.$inferInsert> = {};
+      if (name)  updateData.name  = name;
+      if (email) {
+        const normalized = email.toLowerCase();
         const existing = await getUserByEmail(normalized);
         if (existing && existing.id !== req.session.userId) {
           return res.status(409).json({ error: "Email is already in use by another account" });
@@ -188,14 +201,25 @@ export function registerRoutes(app: Express) {
         updateData.email = normalized;
       }
       if (password) {
-        if (password.length < 6) return res.status(400).json({ error: "Password must be at least 6 characters" });
-        updateData.passwordHash = await hashPassword(password);
+        const currentUser = await getUserById(req.session.userId!);
+        if (!currentUser) return res.status(404).json({ error: "User not found" });
+        const valid = await verifyPassword(currentPassword!, currentUser.passwordHash);
+        if (!valid) return res.status(401).json({ error: "Current password is incorrect" });
+        const trimmed = password.trim();
+        if (!trimmed) return res.status(400).json({ error: "Password cannot be blank or whitespace only" });
+        if (trimmed.length < 6) return res.status(400).json({ error: "Password must be at least 6 characters" });
+        updateData.passwordHash = await hashPassword(trimmed);
       }
       if (Object.keys(updateData).length === 0) return res.status(400).json({ error: "No changes provided" });
       const [u] = await db.update(users).set(updateData).where(eq(users.id, req.session.userId!)).returning();
       if (!u) return res.status(404).json({ error: "User not found" });
       res.json({ user: toSafeUser(u) });
-    } catch (e: any) { res.status(500).json({ error: e.message }); }
+    } catch (e: any) {
+      if (e?.code === "23505") {
+        return res.status(409).json({ error: "Email is already in use by another account" });
+      }
+      res.status(500).json({ error: e.message });
+    }
   });
 
   // ══ USERS (owner only) ════════════════════════════════════════════════════

@@ -45,10 +45,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   async function refreshUser() {
     try {
       const r = await fetch("/api/auth/me");
-      const d = r.ok ? await r.json() : null;
-      setUser(d?.user ?? null);
+      if (r.ok) {
+        const d = await r.json();
+        setUser(d?.user ?? null);
+      } else if (r.status === 401 || r.status === 403) {
+        setUser(null);
+      }
+      // For other errors (5xx, network hiccups), leave existing user state unchanged
     } catch {
-      // silently ignore
+      // silently ignore network errors
     }
   }
 

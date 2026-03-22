@@ -170,8 +170,8 @@ function AppShell() {
                 ? { background: "rgba(0,232,122,0.08)", borderColor: "rgba(0,232,122,0.35)", color: "#00e87a" }
                 : { border: "1px solid transparent", color: "#4e6a5c" }
               }
-              onMouseEnter={e => { if (showProfile || currentPage !== key) (e.target as HTMLElement).style.color = "#e4ede8"; }}
-              onMouseLeave={e => { if (showProfile || currentPage !== key) (e.target as HTMLElement).style.color = "#4e6a5c"; }}
+              onMouseEnter={e => { if (showProfile || currentPage !== key) (e.currentTarget as HTMLButtonElement).style.color = "#e4ede8"; }}
+              onMouseLeave={e => { if (showProfile || currentPage !== key) (e.currentTarget as HTMLButtonElement).style.color = "#4e6a5c"; }}
             >
               <Icon size={12} />
               {label}

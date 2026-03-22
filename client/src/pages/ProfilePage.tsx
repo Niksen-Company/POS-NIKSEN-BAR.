@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { ROLE_PERMISSIONS } from "@shared/schema";
 import type { Role } from "@shared/schema";
@@ -16,6 +16,11 @@ export default function ProfilePage() {
   const [infoForm, setInfoForm] = useState({ name: user.name, email: user.email });
   const [infoSaving, setInfoSaving] = useState(false);
   const [infoMsg, setInfoMsg] = useState<{ ok: boolean; text: string } | null>(null);
+
+  // Keep inputs in sync with the authoritative `user` state (updated by refreshUser after save)
+  useEffect(() => {
+    setInfoForm({ name: user.name, email: user.email });
+  }, [user.name, user.email]);
 
   const setInfo = (k: string) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setInfoForm(f => ({ ...f, [k]: e.target.value }));
@@ -35,6 +40,7 @@ export default function ProfilePage() {
     setInfoMsg(null);
     try {
       await api.patch("/api/auth/profile", { name: infoForm.name, email: infoForm.email });
+      // Sync user context (also syncs infoForm via the useEffect above)
       await refreshUser();
       setInfoMsg({ ok: true, text: "Profile updated successfully." });
     } catch (e: any) {
@@ -45,7 +51,8 @@ export default function ProfilePage() {
   }
 
   // ── Password form ──────────────────────────────────────────────────────────
-  const [pwForm, setPwForm] = useState({ newPassword: "", confirmPassword: "" });
+  const [pwForm, setPwForm] = useState({ currentPassword: "", newPassword: "", confirmPassword: "" });
+  const [showCurrent, setShowCurrent] = useState(false);
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [pwSaving, setPwSaving] = useState(false);
@@ -56,15 +63,19 @@ export default function ProfilePage() {
 
   async function savePassword(e: React.FormEvent) {
     e.preventDefault();
+    if (!pwForm.currentPassword) return setPwMsg({ ok: false, text: "Current password is required." });
     if (!pwForm.newPassword) return setPwMsg({ ok: false, text: "New password is required." });
-    if (pwForm.newPassword.length < 6) return setPwMsg({ ok: false, text: "Password must be at least 6 characters." });
+    if (pwForm.newPassword.trim().length < 6) return setPwMsg({ ok: false, text: "Password must be at least 6 characters." });
     if (pwForm.newPassword !== pwForm.confirmPassword)
       return setPwMsg({ ok: false, text: "Passwords do not match." });
     setPwSaving(true);
     setPwMsg(null);
     try {
-      await api.patch("/api/auth/profile", { password: pwForm.newPassword });
-      setPwForm({ newPassword: "", confirmPassword: "" });
+      await api.patch("/api/auth/profile", {
+        currentPassword: pwForm.currentPassword,
+        password: pwForm.newPassword,
+      });
+      setPwForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
       setPwMsg({ ok: true, text: "Password changed successfully." });
     } catch (e: any) {
       setPwMsg({ ok: false, text: e.message || "Failed to change password." });
@@ -159,6 +170,29 @@ export default function ProfilePage() {
           <form onSubmit={savePassword} className="space-y-4">
             <div>
               <label className="block text-[10px] font-mono tracking-widest text-[#4e6a5c] uppercase mb-1.5">
+                Current Password
+              </label>
+              <div className="relative">
+                <input
+                  type={showCurrent ? "text" : "password"}
+                  className="w-full bg-[#141c18] border border-[#1a2620] rounded-xl px-3 py-2.5 pr-9 text-sm focus:border-[#00e87a] outline-none text-white"
+                  value={pwForm.currentPassword}
+                  onChange={setPw("currentPassword")}
+                  placeholder="Your current password"
+                  autoComplete="current-password"
+                />
+                <button
+                  type="button"
+                  aria-label={showCurrent ? "Hide current password" : "Show current password"}
+                  aria-pressed={showCurrent}
+                  onClick={() => setShowCurrent(s => !s)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4e6a5c] hover:text-white transition-colors">
+                  {showCurrent ? <EyeOff size={13} /> : <Eye size={13} />}
+                </button>
+              </div>
+            </div>
+            <div>
+              <label className="block text-[10px] font-mono tracking-widest text-[#4e6a5c] uppercase mb-1.5">
                 New Password
               </label>
               <div className="relative">
@@ -168,8 +202,13 @@ export default function ProfilePage() {
                   value={pwForm.newPassword}
                   onChange={setPw("newPassword")}
                   placeholder="Min 6 characters"
+                  autoComplete="new-password"
                 />
-                <button type="button" onClick={() => setShowNew(s => !s)}
+                <button
+                  type="button"
+                  aria-label={showNew ? "Hide new password" : "Show new password"}
+                  aria-pressed={showNew}
+                  onClick={() => setShowNew(s => !s)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4e6a5c] hover:text-white transition-colors">
                   {showNew ? <EyeOff size={13} /> : <Eye size={13} />}
                 </button>
@@ -186,8 +225,13 @@ export default function ProfilePage() {
                   value={pwForm.confirmPassword}
                   onChange={setPw("confirmPassword")}
                   placeholder="Repeat new password"
+                  autoComplete="new-password"
                 />
-                <button type="button" onClick={() => setShowConfirm(s => !s)}
+                <button
+                  type="button"
+                  aria-label={showConfirm ? "Hide confirm password" : "Show confirm password"}
+                  aria-pressed={showConfirm}
+                  onClick={() => setShowConfirm(s => !s)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4e6a5c] hover:text-white transition-colors">
                   {showConfirm ? <EyeOff size={13} /> : <Eye size={13} />}
                 </button>
